@@ -1,31 +1,31 @@
-local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
+local userId = LocalPlayer.UserId
 
 local whitelistURL = "https://raw.githubusercontent.com/heri449/Whitelist/main/White%20list"
+local scriptURL = "https://raw.githubusercontent.com/heri449/KINGscript09/main/KING"
 
-local success, response = pcall(function()
+local ok, res = pcall(function()
     return game:HttpGet(whitelistURL)
 end)
 
-if success then
-    local whitelistData = response:split("\n")
-    local isWhitelisted = false
+if ok and res then
+    local found = false
 
-    for _, user in ipairs(whitelistData) do
-        if tonumber(user) == LocalPlayer.UserId then
-            isWhitelisted = true
+    for line in string.split(res, "\n") do
+        local trimmed = line:match("^%s*(.-)%s*$")
+        if tonumber(trimmed) == userId then
+            found = true
             break
         end
     end
 
-    if isWhitelisted then
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/heri449/KINGscript09/main/KING"))()
+    if found then
+        loadstring(game:HttpGet(scriptURL))()
     else
-        LocalPlayer:Kick("No estás en la whitelist.")
+        LocalPlayer:Kick("❌ No estás en la whitelist.")
     end
 else
-    warn("Error al obtener la whitelist:", response)
-    LocalPlayer:Kick("Error al verificar la whitelist.")
+    LocalPlayer:Kick("⚠️ No se pudo cargar la whitelist.")
 end
 5353005412
