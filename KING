@@ -1,309 +1,46 @@
+-- KING Script con protección de whitelist
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local StarterPack = game:GetService("StarterPack")
+local LocalPlayer = Players.LocalPlayer
+local UserId = LocalPlayer.UserId
 
-local player = Players.LocalPlayer
-local PlayerGui = player:WaitForChild("PlayerGui")
-local character = player.Character or player.CharacterAdded:Wait()
+-- URL de tu whitelist en GitHub
+local whitelistUrl = "https://raw.githubusercontent.com/heri449/Whitelist/main/White%20list"
 
--- Herramientas
-local eggName = "Protein Egg"
-local punchName = "Punch"
+-- Verificar si el jugador está en la whitelist
+local success, response = pcall(function()
+    return game:HttpGet(whitelistUrl)
+end)
 
--- Variables globales
-local selectedTarget = nil
-local autoPunchEnabled = false
+if success then
+    local whitelisted = false
+    for line in response:gmatch("[^\r\n]+") do
+        if tonumber(line) == UserId then
+            whitelisted = true
+            break
+        end
+    end
 
--- GUI Setup con nombre "KING"
-local ScreenGui = Instance.new("ScreenGui", PlayerGui)
-ScreenGui.Name = "KING"
-ScreenGui.ResetOnSpawn = false
+    if whitelisted then
+        print("✅ Estás en la whitelist. Ejecutando script...")
+        -- Tu código principal empieza aquí ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+        
+        -- EJEMPLO: (reemplaza esto con tu script real)
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "KING Script";
+            Text = "Script ejecutado correctamente.";
+            Duration = 5;
+        })
+        
+        -- Tu código principal termina aquí ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 400, 0, 140)
-Frame.Position = UDim2.new(0, 10, 0.1, 0)
-Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 50)
-Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = true
-Frame.Name = "MainFrame"
-
-local TopBar = Instance.new("Frame", Frame)
-TopBar.Size = UDim2.new(0, 200, 0, 30)
-TopBar.Position = UDim2.new(0, 0, 0, 0)
-TopBar.BackgroundTransparency = 1
-
-local Title = Instance.new("TextLabel", TopBar)
-Title.Text = "KING"
-Title.Size = UDim2.new(1, -35, 1, 0)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Position = UDim2.new(0, 5, 0, 0)
-
-local minimizeButton = Instance.new("TextButton", TopBar)
-minimizeButton.Text = "-"
-minimizeButton.Size = UDim2.new(0, 30, 1, 0)
-minimizeButton.Position = UDim2.new(1, -35, 0, 0)
-minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-minimizeButton.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
-minimizeButton.Font = Enum.Font.GothamBold
-minimizeButton.TextSize = 14
-
-local PlayerFrame = Instance.new("ScrollingFrame", Frame)
-PlayerFrame.Size = UDim2.new(0, 380, 0, 100)
-PlayerFrame.Position = UDim2.new(0, 10, 0, 35)
-PlayerFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 50)
-PlayerFrame.BorderSizePixel = 0
-PlayerFrame.ClipsDescendants = true
-PlayerFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-PlayerFrame.ScrollBarThickness = 6
-
-local Layout = Instance.new("UIListLayout", PlayerFrame)
-Layout.FillDirection = Enum.FillDirection.Vertical
-Layout.SortOrder = Enum.SortOrder.LayoutOrder
-Layout.Padding = UDim.new(0, 4)
-
-local minimized = false
-
-minimizeButton.MouseButton1Click:Connect(function()
-    minimized = not minimized
-    if minimized then
-        Frame.Size = UDim2.new(0, 240, 0, 35)
-        PlayerFrame.Visible = false
-        TopBar.Size = UDim2.new(1, 0, 1, 0)
     else
-        Frame.Size = UDim2.new(0, 400, 0, 140)
-        PlayerFrame.Visible = true
-        TopBar.Size = UDim2.new(0, 200, 0, 30)
+        warn("❌ Tu cuenta no está en la whitelist.")
+        game.StarterGui:SetCore("SendNotification", {
+            Title = "Acceso Denegado";
+            Text = "No estás en la whitelist.";
+            Duration = 5;
+        })
     end
-end)
-
-local function refreshPlayers()
-    for _, v in ipairs(PlayerFrame:GetChildren()) do
-        if v:IsA("TextButton") then
-            v:Destroy()
-        end
-    end
-
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= player then
-            local btn = Instance.new("TextButton", PlayerFrame)
-            btn.Size = UDim2.new(1, 0, 0, 25)
-            btn.Text = plr.Name
-            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.Font = Enum.Font.Gotham
-            btn.TextSize = 14
-
-            btn.MouseButton1Click:Connect(function()
-                if selectedTarget == plr then
-                    selectedTarget = nil
-                    Title.Text = "KING"
-                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
-                else
-                    selectedTarget = plr
-                    Title.Text = "Target: " .. plr.Name
-                    for _, b in ipairs(PlayerFrame:GetChildren()) do
-                        if b:IsA("TextButton") then
-                            b.BackgroundColor3 = Color3.fromRGB(30, 30, 60)
-                        end
-                    end
-                    btn.BackgroundColor3 = Color3.fromRGB(60, 30, 30)
-                end
-            end)
-        end
-    end
-
-    local contentHeight = Layout.AbsoluteContentSize.Y
-    PlayerFrame.CanvasSize = UDim2.new(0, 0, 0, contentHeight)
+else
+    warn("⚠️ Error al verificar la whitelist: " .. tostring(response))
 end
-
-refreshPlayers()
-Players.PlayerAdded:Connect(refreshPlayers)
-Players.PlayerRemoving:Connect(refreshPlayers)
-
--- Función para restaurar visibilidad de partes de herramienta
-local function restoreVisibility(tool)
-    for _, part in ipairs(tool:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Transparency = 0
-            pcall(function() part.LocalTransparencyModifier = 0 end)
-        end
-    end
-end
-
--- Buscar herramienta en Backpack, StarterPack o ReplicatedStorage
-local function findTool(toolName)
-    local tool = player.Backpack:FindFirstChild(toolName)
-    if tool then return tool end
-
-    tool = StarterPack:FindFirstChild(toolName)
-    if tool then return tool end
-
-    tool = ReplicatedStorage:FindFirstChild(toolName)
-    return tool
-end
-
--- Forzar equipamiento de herramienta
-local function forceEquip(tool)
-    if not (character and character:FindFirstChild("Humanoid")) then return end
-
-    local success, err = pcall(function()
-        character.Humanoid:EquipTool(tool)
-    end)
-
-    task.wait(0.1)
-
-    if not character:FindFirstChild(tool.Name) then
-        tool.Parent = character
-        task.wait(0.1)
-    end
-
-    restoreVisibility(tool)
-end
-
--- Equipar huevo y punch
-local function equipEggAndPunch()
-    if not _G.AutoEquipTools then return end
-    if not character then return end
-
-    local eggEquipped = character:FindFirstChild(eggName)
-    local needEgg = not eggEquipped
-
-    if eggEquipped then
-        for _, part in ipairs(eggEquipped:GetDescendants()) do
-            if part:IsA("BasePart") and part.Transparency > 0 then
-                needEgg = true
-                break
-            end
-        end
-    end
-
-    if needEgg then
-        local eggTool = findTool(eggName)
-        if eggTool then
-            if eggTool.Parent ~= player.Backpack then
-                local clone = eggTool:Clone()
-                clone.Parent = player.Backpack
-                eggTool = clone
-            end
-            forceEquip(eggTool)
-        end
-    end
-
-    local punchEquipped = character:FindFirstChild(punchName)
-    if not punchEquipped then
-        local punchTool = findTool(punchName)
-        if punchTool then
-            if punchTool.Parent ~= player.Backpack then
-                local clone = punchTool:Clone()
-                clone.Parent = player.Backpack
-                punchTool = clone
-            end
-            forceEquip(punchTool)
-        end
-    end
-end
-
--- Bloquear activación del huevo (deshabilitar conexiones en Tool.Activated)
-local function blockEggActivate(tool)
-    if tool and tool:IsA("Tool") then
-        for _, conn in pairs(getconnections(tool.Activated)) do
-            conn:Disable()
-        end
-        tool.Activated:Connect(function() end)
-    end
-end
-
--- Mantener el huevo equipado y bloqueado
-local function maintainEggEquip()
-    task.spawn(function()
-        while _G.AutoEquipTools do
-            local eggTool = character:FindFirstChild(eggName)
-            if eggTool then
-                blockEggActivate(eggTool)
-                restoreVisibility(eggTool)
-            end
-            task.wait(1)
-        end
-    end)
-end
-
--- Auto Punch usando muscleEvent
-local function startAutoPunch()
-    autoPunchEnabled = true
-    local muscleEvent = player:WaitForChild("muscleEvent")
-
-    task.spawn(function()
-        while autoPunchEnabled do
-            local char = player.Character or player.CharacterAdded:Wait()
-            local hand = "rightHand"
-
-            if char and char:FindFirstChild("Humanoid") and muscleEvent then
-                local punchTool = char:FindFirstChild(punchName) or player.Backpack:FindFirstChild(punchName)
-                if punchTool and not char:FindFirstChild(punchName) then
-                    char.Humanoid:EquipTool(punchTool)
-                end
-                muscleEvent:FireServer("punch", hand)
-            end
-            task.wait(0.0001)
-        end
-    end)
-end
-
--- Kill Aura con firetouchinterest
-task.spawn(function()
-    while true do
-        if selectedTarget then
-            local char = player.Character or player.CharacterAdded:Wait()
-            local hand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
-            local targetChar = selectedTarget.Character
-
-            if hand and targetChar and targetChar:FindFirstChild("HumanoidRootPart") then
-                pcall(function()
-                    firetouchinterest(hand, targetChar.HumanoidRootPart, 0)
-                    task.wait(0.05)
-                    firetouchinterest(hand, targetChar.HumanoidRootPart, 1)
-                end)
-            end
-        end
-        task.wait(0.1)
-    end
-end)
-
--- Eventos para mantener equipadas herramientas
-player.CharacterAdded:Connect(function(char)
-    character = char
-    task.wait(1)
-    equipEggAndPunch()
-    maintainEggEquip()
-end)
-
-player.Backpack.ChildAdded:Connect(function(child)
-    if _G.AutoEquipTools and (child.Name == eggName or child.Name == punchName) then
-        task.wait(0.2)
-        equipEggAndPunch()
-    end
-end)
-
--- Variable global toggle (activa por defecto)
-if _G.AutoEquipTools == nil then
-    _G.AutoEquipTools = true
-end
-print("Auto Equip Egg & Punch " .. (_G.AutoEquipTools and "ACTIVADO ✅" or "DESACTIVADO ❌"))
-
--- Loop permanente para mantener equipamiento activo
-task.spawn(function()
-    while _G.AutoEquipTools do
-        equipEggAndPunch()
-        task.wait(0.5)
-    end
-    print("Auto Equip Tools DESACTIVADO")
-end)
-
--- Iniciar auto punch y mantener equipamiento huevo bloqueado
-startAutoPunch()
-maintainEggEquip()
