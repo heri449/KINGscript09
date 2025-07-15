@@ -1,47 +1,31 @@
--- KING Script con protección de whitelist
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local UserId = LocalPlayer.UserId
 
--- URL de tu whitelist en GitHub
-local whitelistUrl = "https://raw.githubusercontent.com/heri449/Whitelist/main/White%20list"
+local whitelistURL = "https://raw.githubusercontent.com/heri449/Whitelist/main/White%20list"
 
--- Verificar si el jugador está en la whitelist
 local success, response = pcall(function()
-    return game:HttpGet(whitelistUrl)
+    return game:HttpGet(whitelistURL)
 end)
 
 if success then
-    local whitelisted = false
-    for line in response:gmatch("[^\r\n]+") do
-        if tonumber(line) == UserId then
-            whitelisted = true
+    local whitelistData = response:split("\n")
+    local isWhitelisted = false
+
+    for _, user in ipairs(whitelistData) do
+        if tonumber(user) == LocalPlayer.UserId then
+            isWhitelisted = true
             break
         end
     end
 
-    if whitelisted then
-        print("✅ Estás en la whitelist. Ejecutando script...")
-        -- Tu código principal empieza aquí ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-        
-        -- EJEMPLO: (reemplaza esto con tu script real)
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "KING Script";
-            Text = "Script ejecutado correctamente.";
-            Duration = 5;
-        })
-        
-        -- Tu código principal termina aquí ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-
+    if isWhitelisted then
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/heri449/KINGscript09/main/KING"))()
     else
-        warn("❌ Tu cuenta no está en la whitelist.")
-        game.StarterGui:SetCore("SendNotification", {
-            Title = "Acceso Denegado";
-            Text = "No estás en la whitelist.";
-            Duration = 5;
-        })
+        LocalPlayer:Kick("No estás en la whitelist.")
     end
 else
-    warn("⚠️ Error al verificar la whitelist: " .. tostring(response))
+    warn("Error al obtener la whitelist:", response)
+    LocalPlayer:Kick("Error al verificar la whitelist.")
 end
-KING_GOD2140
+5353005412
