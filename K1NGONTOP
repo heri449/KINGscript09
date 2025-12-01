@@ -4529,7 +4529,6 @@ killTarget("TheOriginalNobles")
 killTarget("BAJAMILIONcat")
 killTarget("Honnydezz_z")
 killTarget("HonnyyDezz")
-killTarget("heri631")
 
 
 local Credits = window:AddTab("Credits")
